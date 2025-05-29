@@ -1,0 +1,131 @@
+
+<!DOCTYPE html>
+<html lang="th">
+<head>
+  <meta charset="UTF-8" />
+  <meta name="viewport" content="width=device-width, initial-scale=1.0" />
+  <title>บันทึกการลงชื่อเข้าใช้ห้องสืบค้น</title>
+  <style>
+    body {
+      background-color: #121212;
+      color: #ffffff;
+      font-family: 'Sarabun', sans-serif;
+      padding: 2rem;
+      margin: 0;
+    }
+    h1 {
+      text-align: center;
+      color: #ffd1dc;
+    }
+    form {
+      max-width: 500px;
+      margin: auto;
+      background-color: #1e1e1e;
+      padding: 2rem;
+      border-radius: 12px;
+      box-shadow: 0 0 10px rgba(255, 255, 255, 0.1);
+    }
+    label {
+      display: block;
+      margin-bottom: 0.5rem;
+      margin-top: 1rem;
+      color: #f5f5f5;
+    }
+    input, select {
+      width: 100%;
+      padding: 0.6rem;
+      border: none;
+      border-radius: 8px;
+      background-color: #333;
+      color: #fff;
+    }
+    button {
+      margin-top: 1.5rem;
+      padding: 0.8rem 1.5rem;
+      background-color: #ffd1dc;
+      color: #000;
+      border: none;
+      border-radius: 8px;
+      width: 100%;
+      cursor: pointer;
+      font-weight: bold;
+    }
+    .hidden {
+      display: none;
+    }
+  </style>
+</head>
+<body>
+  <h1>บันทึกการลงชื่อเข้าใช้ห้องสืบค้น</h1>
+  <form id="loginForm" method="POST" target="hidden_iframe" onsubmit="submitted=true;">
+    <label for="studentCode">รหัสนักเรียน:</label>
+    <input type="number" id="studentCode" name="studentCode" required />
+
+    <input type="hidden" name="entry.69488351" id="entryName" />
+    <input type="hidden" name="entry.1292041794" id="entryPrefix" />
+    <input type="hidden" name="entry.259521756" id="entryCode" />
+    <input type="hidden" name="entry.1979047353" id="entryClass" />
+    <input type="hidden" name="entry.559828272" id="entryRoom" />
+
+    <button type="submit">ลงชื่อเข้าใช้</button>
+  </form>
+
+  <iframe name="hidden_iframe" class="hidden"></iframe>
+
+  <script>
+    const form = document.getElementById('loginForm');
+    const studentInput = document.getElementById('studentCode');
+
+    const formUrl = "https://docs.google.com/forms/d/e/1FAIpQLSfnqX_pJwfIK4Iosb9p-LHS17ymuhZITh3FI-c6P_BtyKz3xQ/formResponse";
+
+    const SHEET_CSV_URL = "https://docs.google.com/spreadsheets/d/1GeaBaH0lpAOTKiOzGYhv10dUEHJ8Z5N9qzyl2UtWo2c/export?format=csv&sheet=ฐานข้อมูลนักเรียน";
+
+    let studentData = {};
+
+    async function fetchStudentData() {
+      try {
+        const res = await fetch(SHEET_CSV_URL);
+        const text = await res.text();
+        const rows = text.trim().split("\n").slice(1);
+        for (const row of rows) {
+          const cols = row.split(",");
+          const code = cols[0].trim();
+          studentData[code] = {
+            number: cols[1],
+            prefix: cols[2],
+            name: cols[3],
+            level: cols[4],
+            room: cols[5]
+          };
+        }
+      } catch (err) {
+        alert("ไม่สามารถโหลดข้อมูลรายชื่อได้ กรุณาลองใหม่ภายหลัง");
+      }
+    }
+
+    form.addEventListener('submit', (e) => {
+      const code = studentInput.value.trim();
+      const student = studentData[code];
+      if (!student) {
+        e.preventDefault();
+        alert("ไม่พบรหัสนักเรียนนี้ในระบบ");
+        return;
+      }
+
+      document.getElementById('entryName').value = student.name;
+      document.getElementById('entryPrefix').value = student.prefix;
+      document.getElementById('entryCode').value = code;
+      document.getElementById('entryClass').value = student.level;
+      document.getElementById('entryRoom').value = student.room;
+
+      form.action = formUrl;
+
+      setTimeout(() => {
+        form.reset();
+      }, 1000);
+    });
+
+    fetchStudentData();
+  </script>
+</body>
+</html>
